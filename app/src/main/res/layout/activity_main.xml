@@ -10,4 +10,10 @@
         android:text="测试pdf"
         android:id="@+id/btpdf"
         />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="清空缓存"
+        android:id="@+id/btclear"
+        />
 </LinearLayout>

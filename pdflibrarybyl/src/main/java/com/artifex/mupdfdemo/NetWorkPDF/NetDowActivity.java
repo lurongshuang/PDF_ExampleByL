@@ -106,6 +106,22 @@ public class NetDowActivity extends Activity {
         return isex;
     }
 
+    /*
+    清空文件
+     */
+    public static void clearPDFDir() {
+        File file = new File(PDFPath);
+        File[] files = file.listFiles();
+        for (File file1 : files) {
+            if (file1.isFile()) {
+                file1.delete();
+            }
+        }
+    }
+
+    /*
+    跳转阅读
+     */
     public void openFile(String filePath) {
         Uri uri = Uri.parse(filePath);
         Intent intent = new Intent(this, MuPDFActivity.class);
@@ -132,12 +148,14 @@ public class NetDowActivity extends Activity {
                     @Override
                     protected void progress(BaseDownloadTask task, int soFarBytes, int totalBytes) {
                     }
+
                     //完成下载
                     @Override
                     protected void completed(BaseDownloadTask task) {
                         dismissProgressDialog();
                         openFile(fileUrl);
                     }
+
                     //暂停
                     @Override
                     protected void paused(BaseDownloadTask task, int soFarBytes, int totalBytes) {

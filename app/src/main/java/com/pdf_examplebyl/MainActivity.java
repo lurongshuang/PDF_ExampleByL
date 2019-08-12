@@ -5,23 +5,22 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 
 import com.artifex.mupdfdemo.MuPDFActivity;
 import com.artifex.mupdfdemo.NetWorkPDF.NetDowActivity;
 
-import java.io.File;
-
 public class MainActivity extends AppCompatActivity {
     public Button btpdf;
+    public Button btclear;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         btpdf = findViewById(R.id.btpdf);
+        btclear = findViewById(R.id.btclear);
 
         btpdf.setOnClickListener(new View.OnClickListener() {
 
@@ -37,6 +36,12 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("LoPath",getApplicationContext().getExternalFilesDir(null).toString());
                 startActivity(intent);
 
+            }
+        });
+        btclear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                NetDowActivity.clearPDFDir();
             }
         });
     }
