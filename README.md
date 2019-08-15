@@ -5,8 +5,9 @@
 由于工作需要, 阅读PDF文件，但是之前写的FBReader+MUPDF的ARR太大了，现在将查看PDF功能拆分出来。
 就是这么个功能。
 
+本地文件查看 去参考  FBReader+Mupdf 的代码;
 
-跳转方式：
+网络跳转方式：
 ```
 String url ="http://xxxxxx/a.pdf";
 intent.putExtra("path",url);
@@ -43,3 +44,5 @@ startActivity(intent);
       ></activity>
   <!--pdf-->
   ```
+  
+  联系方式：QQ 2212709787
