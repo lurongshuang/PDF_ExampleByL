@@ -6,6 +6,14 @@
 就是这么个功能。
 
 
+跳转方式：
+```
+String url ="http://xxxxxx/a.pdf";
+intent.putExtra("path",url);
+intent.putExtra("LoPath",getApplicationContext().getExternalFilesDir(null).toString());
+startActivity(intent);
+```
+
 1.使用的时候 记得申请 网络，文件相关的权限
 2.并且 将 activity 声明如下：
 ```
