@@ -8,7 +8,7 @@
 
 1.使用的时候 记得申请 网络，文件相关的权限
 2.并且 将 activity 声明如下：
-
+```
   <!--pdf-->
   <activity android:name="com.artifex.mupdfdemo.MarkLineActivity" >
   </activity>
@@ -34,3 +34,4 @@
       android:theme="@style/Theme.AppCompat.Dialog"
       ></activity>
   <!--pdf-->
+  ```
