@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="anim_menu_bottombar">
+        <item name="android:windowEnterAnimation">@anim/menu_bottombar_in</item>
+        <item name="android:windowExitAnimation">@anim/menu_bottombar_out</item>
+    </style>
+
+    <style name="checkBoxStyle" parent="@style/Theme.AppCompat.Light">
+        <item name="android:colorControlActivated">@color/colore48581</item>
+        <item name="android:colorControlNormal">@color/colord9d9d9</item>
+    </style>
+</resources>

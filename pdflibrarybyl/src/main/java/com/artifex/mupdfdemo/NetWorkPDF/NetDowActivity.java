@@ -1,7 +1,5 @@
 package com.artifex.mupdfdemo.NetWorkPDF;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -11,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Toast;
 
+import com.artifex.mupdfdemo.DataBaseManager;
 import com.artifex.mupdfdemo.MuPDFActivity;
 import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloadListener;
@@ -22,6 +21,8 @@ import java.io.File;
 public class NetDowActivity extends Activity {
     //请求地址
     private String path;
+    //名称
+    private String name;
     //文件名称
     private String fileName;
     //本机地址
@@ -30,16 +31,26 @@ public class NetDowActivity extends Activity {
     private static String cachePath = "";
     //PDF文件 保存地址
     private static String PDFPath = "";
+    //是否收费
+    private  boolean openCharge;
+    //体验页数
+    private  int experiencePage;
+    //是否先跳转到目录
+    private  boolean menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_net_dow);
-        Intent intent = getIntent();
-        LoPath = intent.getStringExtra("LoPath");
+        Bundle intent = getIntent().getBundleExtra("data");
+        LoPath = intent.getString("LoPath");
         cachePath = LoPath + "/.DwnloadFile";
         PDFPath = cachePath + "/.PDF";
-        path = intent.getStringExtra("path");
+        path = intent.getString("path");
+        name = intent.getString("name");
+        openCharge =  intent.getBoolean("openCharge",false);
+        experiencePage = intent.getInt("experiencePage",0);
+        menu = intent.getBoolean("menu",false);
         FileDownloader.setup(this);   //ac为activity的上下文对象
         initData();
     }
@@ -54,7 +65,11 @@ public class NetDowActivity extends Activity {
             pdffile.mkdirs();
         }
         //获取文件名称
-        fileName = getFileName(path);
+        if (name != null && name.trim().length() > 1) {
+            fileName = name;
+        } else {
+            fileName = getFileName(path);
+        }
         if (!getExistsOfPath(PDFPath, fileName)) {
             //下载文件
             dowFile(path, PDFPath + "/" + fileName);
@@ -73,7 +88,6 @@ public class NetDowActivity extends Activity {
             fileName = Path.substring(Path.lastIndexOf("/") + 1);
         }
         return fileName;
-//        return "test1.pdf";
     }
 
     public static boolean getIsExists(String path) {
@@ -112,11 +126,16 @@ public class NetDowActivity extends Activity {
     public static void clearPDFDir() {
         File file = new File(PDFPath);
         File[] files = file.listFiles();
-        for (File file1 : files) {
-            if (file1.isFile()) {
-                file1.delete();
+        if(files!=null && files.length>0) {
+            for (File file1 : files) {
+                if (file1.isFile()) {
+                    file1.delete();
+                }
             }
         }
+        //清空书签
+        DataBaseManager.getDB().Exesql("DELETE FROM bookmark",null, DataBaseManager.getInstance());
+        DataBaseManager.getDB().closeDB(DataBaseManager.getInstance());
     }
 
     /*
@@ -127,6 +146,9 @@ public class NetDowActivity extends Activity {
         Intent intent = new Intent(this, MuPDFActivity.class);
         intent.setAction(Intent.ACTION_VIEW);
         intent.setData(uri);
+        intent.putExtra("openCharge",openCharge);
+        intent.putExtra("experiencePage",experiencePage);
+        intent.putExtra("menu",menu);
         startActivity(intent);
         this.finish();
 

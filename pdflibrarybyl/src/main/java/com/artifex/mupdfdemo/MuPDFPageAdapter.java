@@ -19,7 +19,11 @@ public class MuPDFPageAdapter extends BaseAdapter {
 	}
 
 	public int getCount() {
-		return mCore.countPages();
+		if(!MuPDFActivity.isCharge()) {
+			return mCore.countPages();
+		}else {
+			return MuPDFActivity.pageSize;
+		}
 	}
 
 	public Object getItem(int position) {

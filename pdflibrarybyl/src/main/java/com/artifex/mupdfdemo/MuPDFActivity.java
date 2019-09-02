@@ -16,6 +16,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -40,6 +41,8 @@ import android.widget.TextView;
 import android.widget.ViewAnimator;
 
 import com.artifex.mupdfdemo.bookmark.BookMark;
+import com.artifex.mupdfdemo.bookmark.CFrag;
+import com.artifex.mupdfdemo.popwindow.BuyPopwindow;
 import com.lrs.pdflibrarybyl.R;
 import com.lrs.pdflibrarybyl.changepage.ChangePage;
 
@@ -109,6 +112,52 @@ public class MuPDFActivity extends Activity {
     private SharedPreferences sp;
     private Button bt_bookmark;
     public static ChangePage changePage;
+    //体验页数
+    public static int pageSize = 15;
+    //是否开启收费
+    public static boolean openCharge = false;
+    public static int Bookprice = 10;
+    static Handler handler;
+    public BuyPopwindow buyPopwindow;
+    public static onBookBuyListen bookBuyListen;
+
+    public static boolean isCharge() {
+        return openCharge;
+    }
+
+    public void initHandler() {
+        handler = new Handler() {
+            public void handleMessage(Message message) {
+                switch (message.what) {
+                    case 200:
+                        buyPopwindow = BuyPopwindow.getBuypop(MuPDFActivity.this, findViewById(R.id.rlmupdfview), mFileName, Bookprice, new BuyPopwindow.onBookBuyListen() {
+                            @Override
+                            public void oneChatWPay() {
+                                //点击了微信支付
+                                bookBuyListen.oneChatWPay();
+                            }
+
+                            @Override
+                            public void onAliPay() {
+                                //点击了支付宝支付
+                                bookBuyListen.onAliPay();
+                            }
+                        });
+                        buyPopwindow.showPop();
+                        break;
+                }
+            }
+        };
+    }
+
+    public static void pageProgress(int index) {
+//        Log.e("page","当前 第 "+index+"页");
+        if (openCharge && index == pageSize) {
+            Message message = new Message();
+            message.what = 200;
+            handler.sendMessage(message);
+        }
+    }
 
     public void createAlertWaiter() {
         mAlertsActive = true;
@@ -275,18 +324,15 @@ public class MuPDFActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        mAlertBuilder = new AlertDialog.Builder(this);
+        Intent intent = getIntent();
 
         if (core == null) {
             core = (MuPDFCore) getLastNonConfigurationInstance();
-
             if (savedInstanceState != null && savedInstanceState.containsKey("FileName")) {
                 mFileName = savedInstanceState.getString("FileName");
             }
         }
         if (core == null) {
-            Intent intent = getIntent();
             byte buffer[] = null;
             if (Intent.ACTION_VIEW.equals(intent.getAction())) {
                 Uri uri = intent.getData();
@@ -361,6 +407,7 @@ public class MuPDFActivity extends Activity {
         }
 
         createUI(savedInstanceState);
+        initHandler();
     }
 
     public void requestPassword(final Bundle savedInstanceState) {
@@ -483,7 +530,7 @@ public class MuPDFActivity extends Activity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 updatePageNumView((progress + mPageSliderRes / 2) / mPageSliderRes);
                 // 数据库对比 是否为书签
-                SQLiteDatabase db = openDBOrTable();
+                SQLiteDatabase db = CFrag.openDBOrTable(MuPDFActivity.this);
                 String[] values = new String[2];
                 values[0] = mFileName;
                 values[1] = progress + "";
@@ -577,10 +624,21 @@ public class MuPDFActivity extends Activity {
         // 点击书签
         mLinkButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                SQLiteDatabase db = openDBOrTable();
+                SQLiteDatabase db = CFrag.openDBOrTable(MuPDFActivity.this);
                 String[] values = new String[2];
+                String[] inval = new String[3];
                 values[0] = mFileName;
+                inval[0] = mFileName;
                 values[1] = mPageSlider.getProgress() + "";
+                inval[1] = mPageSlider.getProgress() + "";
+                OutlineItem[] outlineItem = core.getOutline();
+                inval[2] = "";
+                for (OutlineItem item : outlineItem) {
+                    if (item != null && item.page ==  (mPageSlider.getProgress() + MuPDFActivity.mPageSliderRes / 2) / MuPDFActivity.mPageSliderRes) {
+                        inval[2] = item.title;
+                        break;
+                    }
+                }
                 List<Map<String, Object>> lists = new ArrayList<Map<String, Object>>();
                 lists = DataBaseManager.getDB().querysql("select * from bookmark where bookName=? and bookNum=?",
                         values, db);
@@ -588,7 +646,7 @@ public class MuPDFActivity extends Activity {
                     DataBaseManager.getDB().Exesql("delete from bookmark where bookName=? and bookNum=?", values, db);
                     mLinkButton.setImageResource(R.drawable.book_mark);
                 } else {
-                    DataBaseManager.getDB().Exesql("insert into bookmark(bookName,bookNum) values(?,?)", values, db);
+                    DataBaseManager.getDB().Exesql("insert into bookmark(bookName,bookNum,bookTitle) values(?,?,?)", inval, db);
                     mLinkButton.setImageResource(R.drawable.book_mark_select);
                 }
 
@@ -709,6 +767,25 @@ public class MuPDFActivity extends Activity {
         layout.addView(mDocView);
         layout.addView(mButtonsView);
         setContentView(layout);
+        Intent intent = getIntent();
+        //判断是否跳转目录
+        if (intent.getBooleanExtra("menu", false)) {
+            OutlineItem outline[] = core.getOutline();
+            if (outline != null) {
+                OutlineActivityData.get().items = outline;
+                OutlineActivityData.get().index = mDocView.getDisplayedViewIndex();
+
+            }
+            Intent intentmun = new Intent(MuPDFActivity.this, BookMark.class);
+            intentmun.putExtra("mFileName", mFileName.toString());
+            intentmun.putExtra("progress", mPageSlider.getProgress() + "");
+            startActivityForResult(intentmun, OUTLINE_REQUEST);
+        }
+        mAlertBuilder = new AlertDialog.Builder(this);
+        //是否收费
+        openCharge = intent.getBooleanExtra("openCharge", false);
+        //体验页数
+        pageSize = intent.getIntExtra("experiencePage", 0);
     }
 
     /**
@@ -740,16 +817,6 @@ public class MuPDFActivity extends Activity {
         activity.getWindow().setAttributes(lp);
     }
 
-    public SQLiteDatabase openDBOrTable() {
-
-        SQLiteDatabase db = DataBaseManager.getDB().createOrOpenDB(getApplication().getApplicationContext(), null,
-                "bookmark.db");
-        DataBaseManager.getDB().Exesql(
-                "create table if not exists bookmark(id integer primary key autoincrement,bookName text, bookNum text)",
-                null, db);
-        return db;
-    }
-
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -760,6 +827,11 @@ public class MuPDFActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (openCharge) {
+            if (requestCode > pageSize) {
+                requestCode = pageSize;
+            }
+        }
         super.onActivityResult(requestCode, resultCode, data);
         hideButtons();
         if (data != null && data.getIntExtra("code", -1) == 110) {
@@ -1026,25 +1098,25 @@ public class MuPDFActivity extends Activity {
 
     private void makeButtonsView() {
         mButtonsView = getLayoutInflater().inflate(R.layout.pdf_buttons, null);
-        mFilenameView = (TextView) mButtonsView.findViewById(R.id.docNameText);
-        mPageSlider = (SeekBar) mButtonsView.findViewById(R.id.pageSlider);
-        mPageNumberView = (TextView) mButtonsView.findViewById(R.id.pageNumber);
-        mInfoView = (TextView) mButtonsView.findViewById(R.id.info);
+        mFilenameView = mButtonsView.findViewById(R.id.docNameText);
+        mPageSlider = mButtonsView.findViewById(R.id.pageSlider);
+        mPageNumberView = mButtonsView.findViewById(R.id.pageNumber);
+        mInfoView = mButtonsView.findViewById(R.id.info);
         // mOutlineButton = (ImageButton)
         // mButtonsView.findViewById(R.id.outlineButton);
-        mAnnotButton = (ImageButton) mButtonsView.findViewById(R.id.editAnnotButton);
-        mAnnotTypeText = (TextView) mButtonsView.findViewById(R.id.annotType);
-        mTopBarSwitcher = (ViewAnimator) mButtonsView.findViewById(R.id.switcher);
-        mSearchBack = (ImageButton) mButtonsView.findViewById(R.id.searchBack);
-        mSearchFwd = (ImageButton) mButtonsView.findViewById(R.id.searchForward);
-        mSearchText = (EditText) mButtonsView.findViewById(R.id.searchText);
+        mAnnotButton = mButtonsView.findViewById(R.id.editAnnotButton);
+        mAnnotTypeText = mButtonsView.findViewById(R.id.annotType);
+        mTopBarSwitcher = mButtonsView.findViewById(R.id.switcher);
+        mSearchBack = mButtonsView.findViewById(R.id.searchBack);
+        mSearchFwd = mButtonsView.findViewById(R.id.searchForward);
+        mSearchText = mButtonsView.findViewById(R.id.searchText);
 
-        mLinkButton = (ImageButton) mButtonsView.findViewById(R.id.linkButton);
+        mLinkButton = mButtonsView.findViewById(R.id.linkButton);
         // mReflowButton=(ImageButton)
         // mButtonsView.findViewById(R.id.reflowButton);
-        ln_Bottom = (LinearLayout) mButtonsView.findViewById(R.id.ln_Bottom);
-        bt_look_Sty = (Button) mButtonsView.findViewById(R.id.bt_look_Sty);
-        bt_bookmark = (Button) mButtonsView.findViewById(R.id.bt_bookmark);
+        ln_Bottom = mButtonsView.findViewById(R.id.ln_Bottom);
+        bt_look_Sty = mButtonsView.findViewById(R.id.bt_look_Sty);
+        bt_bookmark = mButtonsView.findViewById(R.id.bt_bookmark);
 
         mInfoView.setVisibility(View.INVISIBLE);
         mTopBarSwitcher.setVisibility(View.INVISIBLE);
@@ -1262,7 +1334,7 @@ public class MuPDFActivity extends Activity {
             showButtons();
             searchModeOff();
         }
-        return  false;
+        return false;
 //        return super.onPrepareOptionsMenu(menu);
     }
 
@@ -1318,16 +1390,37 @@ public class MuPDFActivity extends Activity {
         if (getWindow() == null) {
             return;
         }
-        if (enable) { // 隐藏状态栏
-            WindowManager.LayoutParams lp = getWindow().getAttributes();
-            lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
-            getWindow().setAttributes(lp);
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        } else { // 显示状态栏
-            WindowManager.LayoutParams lp = getWindow().getAttributes();
-            lp.flags &= (~WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getWindow().setAttributes(lp);
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        }
+//        if (enable) { // 隐藏状态栏
+//            WindowManager.LayoutParams lp = getWindow().getAttributes();
+//            lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+//            getWindow().setAttributes(lp);
+//            getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+//        } else { // 显示状态栏
+//            WindowManager.LayoutParams lp = getWindow().getAttributes();
+//            lp.flags &= (~WindowManager.LayoutParams.FLAG_FULLSCREEN);
+//            getWindow().setAttributes(lp);
+//            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+//        }
+    }
+
+    //支付方式返回Activity
+    public interface onBookBuyListen {
+        //支付宝支付
+        void oneChatWPay();
+
+        //微信支付
+        void onAliPay();
+    }
+
+    public static void setBookBuyListen(onBookBuyListen listen) {
+        bookBuyListen = listen;
+    }
+
+    public static void onPaySuccess(int payType) {
+        //关闭收费
+        openCharge = false;
+        //关闭
+        BuyPopwindow.dismissPop();
     }
 }
+

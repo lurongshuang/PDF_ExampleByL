@@ -53,4 +53,15 @@
     <string name="underline">下划线</string>
     <string name="yes">是</string>
     <string name="shuqianlist">书签列表</string>
+
+
+    <!--but-->
+    <string name="buybut">购买</string>
+    <string name="buyVIP">开通VIP</string>
+    <string name="buynow">直接购买</string>
+    <string name="buymonto">连续包月</string>
+    <string name="gotoBuy">立即购买</string>
+    <string name="bookmoney">价格 :</string>
+    <string name="buyTips">支付成功后，立即解锁已购内容</string>
+    <!--but-->
 </resources>

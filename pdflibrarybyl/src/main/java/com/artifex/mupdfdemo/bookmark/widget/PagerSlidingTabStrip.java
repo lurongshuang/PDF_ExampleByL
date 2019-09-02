@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package com.lrs.pdflibrarybyl.bookmark.widget;
+package com.artifex.mupdfdemo.bookmark.widget;
 
 import java.util.Locale;
 import android.content.Context;

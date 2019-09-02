@@ -9,6 +9,7 @@ import com.artifex.mupdfdemo.DataBaseManager;
 import com.artifex.mupdfdemo.MarkLineAdapter;
 import com.artifex.mupdfdemo.OutlineItem;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -35,7 +36,7 @@ public class CFrag extends Fragment {
 		te_isshow = (TextView) View.findViewById(R.id.te_isshow);
 		Intent intent = getActivity().getIntent();
 		String mFileName = intent.getStringExtra("mFileName");
-		SQLiteDatabase db = openDBOrTable();
+		SQLiteDatabase db = openDBOrTable(getActivity());
 		String[] values = new String[1];
 		values[0] = mFileName;
 		List<Map<String, Object>> lists = new ArrayList<Map<String, Object>>();
@@ -47,7 +48,7 @@ public class CFrag extends Fragment {
 			MarkList = new OutlineItem[lists.size()];
 			for (int i = 0; i < lists.size(); i++) {
 				Map<String, Object> map = lists.get(i);
-				OutlineItem ol = new OutlineItem(Integer.parseInt(map.get("id") + ""), map.get("bookName").toString(),
+				OutlineItem ol = new OutlineItem(Integer.parseInt(map.get("id") + ""), map.get("bookTitle").toString(),
 						Integer.parseInt(map.get("bookNum") + ""));
 				MarkList[i] = ol;
 			}
@@ -74,12 +75,11 @@ public class CFrag extends Fragment {
 		return View;
 	}
 
-	public SQLiteDatabase openDBOrTable() {
-
+	public static SQLiteDatabase openDBOrTable(Activity activity) {
 		SQLiteDatabase db = DataBaseManager.getDB()
-				.createOrOpenDB(getActivity().getApplication().getApplicationContext(), null, "bookmark.db");
+				.createOrOpenDB(activity.getApplication().getApplicationContext(), null, "bookmark.db");
 		DataBaseManager.getDB().Exesql(
-				"create table if not exists bookmark(id integer primary key autoincrement,bookName text, bookNum text)",
+				"create table if not exists bookmark(id integer primary key autoincrement,bookName text, bookNum text, bookTitle text)",
 				null, db);
 		return db;
 	}

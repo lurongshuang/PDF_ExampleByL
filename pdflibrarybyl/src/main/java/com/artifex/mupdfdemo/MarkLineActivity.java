@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
 
+import com.artifex.mupdfdemo.bookmark.CFrag;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +24,7 @@ public class MarkLineActivity extends ListActivity {
 		Intent intent = getIntent();
 		String mFileName = intent.getStringExtra("mFileName");
 		String progress = intent.getStringExtra("progress");
-		SQLiteDatabase db = openDBOrTable();
+		SQLiteDatabase db = CFrag.openDBOrTable(MarkLineActivity.this);
 		String[] values = new String[1];
 		values[0] = mFileName;
 		List<Map<String, Object>> lists = new ArrayList<Map<String, Object>>();
@@ -40,17 +42,6 @@ public class MarkLineActivity extends ListActivity {
 
 		}
 	}
-
-	public SQLiteDatabase openDBOrTable() {
-
-		SQLiteDatabase db = DataBaseManager.getDB().createOrOpenDB(getApplication().getApplicationContext(), null,
-				"bookmark.db");
-		DataBaseManager.getDB().Exesql(
-				"create table if not exists bookmark(id integer primary key autoincrement,bookName text, bookNum text)",
-				null, db);
-		return db;
-	}
-
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);

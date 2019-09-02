@@ -85,6 +85,7 @@ public class ReaderView
 		return mCurrent;
 	}
 
+	//j记录上一下的信息
 	public void setDisplayedViewIndex(int i) {
 		if (0 <= i && i < mAdapter.getCount()) {
 			onMoveOffChild(mCurrent);
@@ -366,7 +367,6 @@ public class ReaderView
 				if (bounds.left >= 0) {
 					// Fling off to the left bring next view onto screen
 					View vl = mChildViews.get(mCurrent+1);
-
 					if (vl != null) {
 						slideViewOntoScreen(vl);
 						return true;
@@ -478,7 +478,6 @@ public class ReaderView
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		mScaleGestureDetector.onTouchEvent(event);
-
 		if (!mScaling)
 			mGestureDetector.onTouchEvent(event);
 
@@ -769,6 +768,9 @@ public class ReaderView
 	}
 
 	private void slideViewOntoScreen(View v) {
+		//页数监听
+		MuPDFActivity.pageProgress(mCurrent+1);
+
 		Point corr = getCorrection(getScrollBounds(v));
 		if (corr.x != 0 || corr.y != 0) {
 			mScrollerLastX = mScrollerLastY = 0;

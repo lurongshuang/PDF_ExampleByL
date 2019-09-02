@@ -9,8 +9,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import com.artifex.mupdfdemo.bookmark.widget.PagerSlidingTabStrip;
 import com.lrs.pdflibrarybyl.R;
-import com.lrs.pdflibrarybyl.bookmark.widget.PagerSlidingTabStrip;
 
 public class BookMark extends FragmentActivity {
 	PagerSlidingTabStrip tabs;
